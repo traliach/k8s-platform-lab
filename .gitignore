@@ -21,7 +21,8 @@ coverage/
 *.tfstate.backup
 *.tfvars
 !*.tfvars.example
-.terraform.lock.hcl
+*.tfplan
+# Note: .terraform.lock.hcl is intentionally committed for reproducible provider versions
 
 # OS
 .DS_Store
@@ -42,3 +43,16 @@ yarn-error.log*
 # Testing
 coverage/
 .nyc_output/
+
+# Kubernetes / secrets — never commit these
+kubeconfig
+*.kubeconfig
+*-secret.yaml
+*-secret.yml
+
+# SSH keys
+*.pem
+*.key
+
+# Docker
+*.tar
