@@ -8,10 +8,12 @@ terraform {
     }
   }
 
-  # Local backend — state stored on your machine.
-  # To migrate to S3 later: add a backend "s3" block and run terraform init -migrate-state
-  backend "local" {
-    path = "terraform.tfstate"
+  backend "s3" {
+    bucket         = "achille-tf-state"
+    key            = "k8s-platform-lab/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "k8s-platform-lab-tf-lock"
+    encrypt        = true
   }
 }
 

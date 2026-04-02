@@ -5,9 +5,13 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type — minimum t3.medium for k3s + ArgoCD + Prometheus"
+  description = "EC2 instance type — minimum t3.medium for k3s + ArgoCD + Prometheus (not free tier)"
   type        = string
   default     = "t3.medium"
+  validation {
+    condition     = contains(["t3.medium", "t3.large", "t2.medium"], var.instance_type)
+    error_message = "Instance type must be at least t3.medium. t2.micro is not sufficient for this stack."
+  }
 }
 
 variable "ami_id" {
