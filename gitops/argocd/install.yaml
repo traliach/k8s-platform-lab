@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+# ArgoCD install manifest reference — v2.13.3
+# Applied manually via install-argocd.sh during cluster bootstrap.
+# This file documents the version used and serves as a reference.
+# Source: https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.3/manifests/install.yaml
