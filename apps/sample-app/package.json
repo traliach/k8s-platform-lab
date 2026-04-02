@@ -1,0 +1,18 @@
+{
+  "name": "sample-app",
+  "version": "1.0.0",
+  "description": "k8s-platform-lab sample app — React frontend + Express backend",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "build": "cd client && npm install && npm run build"
+  },
+  "dependencies": {
+    "express": "4.18.2",
+    "prom-client": "15.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
