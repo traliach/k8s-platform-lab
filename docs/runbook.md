@@ -354,4 +354,101 @@ ArgoCD:   http://18.206.152.239:30080
 
 ---
 
-*Runbook continues as sprints are completed.*
+---
+
+## 5. Issues, decisions, and Q&A log
+
+This section is a running log of every question asked, problem hit, and decision
+made during the build. Updated after every session.
+
+---
+
+### Session 1 — 2026-03-30 / 2026-04-02
+
+---
+
+**Q: Why not use DigitalOcean?**
+A: AWS was chosen because the account was already created and AWS has broader
+ecosystem coverage for demonstrating platform engineering skills (IAM, VPC, SGs,
+S3 backend, service quotas). DigitalOcean would also have worked — the Terraform
+would be similar.
+
+---
+
+**Q: Can we use AWS free tier (t2.micro)?**
+A: No. t2.micro has 1 vCPU and 1GB RAM. The stack needs:
+- k3s: ~200MB
+- ArgoCD: ~300MB
+- Prometheus: ~400MB
+- Grafana: ~150MB
+- Sample app: ~50MB
+Total: >1GB — t2.micro would OOM. Minimum viable is t3.medium (2 vCPU, 4GB RAM).
+
+---
+
+**Q: Why not 3 EC2 instances and connect them?**
+A: Out of scope per project rules. Multi-node adds CNI config, node-to-node
+networking, and load balancer complexity that isn't the goal here. Single VM
+demonstrates all the platform skills needed.
+
+---
+
+**Q: Why use a `.tfvars` file? I use it for modular environments.**
+A: You're right that `.tfvars` is for environment separation (dev/staging/prod).
+In this single-environment project it was only used to supply the sensitive
+`public_key` variable locally. The cleaner approach is a shell env variable:
+`export TF_VAR_public_key="$(cat ~/.ssh/k8s-platform-lab-key.pub)"`
+The `.tfvars` file is gitignored and was a temporary convenience.
+
+---
+
+**Q: Can I create the DynamoDB lock table with Terraform?**
+A: Chicken-and-egg problem — the table must exist before Terraform can use it
+for state locking. Adding it to the same Terraform config that uses it as a
+backend requires a two-step apply (`-target` first, then migrate backend).
+Decision: create it manually in the AWS Console once. It's a one-time bootstrap
+resource, not application infrastructure. Documented here so it's not lost.
+
+---
+
+**Issue: `terraform apply` failed — t3.medium not eligible for free tier**
+Error:
+```
+api error InvalidParameterCombination: The specified instance type is not
+eligible for Free Tier.
+```
+Diagnosis: Brand new AWS account with 24-hour activation hold on non-free-tier
+instances. The error message is misleading — it's not a quota issue (quota was 5
+vCPUs, sufficient). It's an account age restriction.
+Resolution: Ran `terraform apply` again ~30 minutes later. It succeeded without
+any changes to the configuration. The hold lifted automatically.
+
+---
+
+**Issue: ArgoCD CLI not found on the VM**
+Error: `-bash: argocd: command not found`
+Cause: The ArgoCD *server* was installed (via the Kubernetes manifest) but the
+ArgoCD *CLI binary* was not. These are separate things.
+Resolution: Downloaded the CLI binary matching the server version and installed it:
+```bash
+curl -sSL -o /tmp/argocd https://github.com/argoproj/argo-cd/releases/download/v2.13.3/argocd-linux-amd64
+sudo install -m 555 /tmp/argocd /usr/local/bin/argocd
+```
+
+---
+
+**Q: Why not log into the machine directly and run commands manually?**
+A: Scripts run non-interactively over SSH (`ssh user@host "bash script.sh"`) are:
+1. Reproducible — the exact commands are version-controlled in the repo
+2. Error-safe — `set -euo pipefail` stops on any failure automatically
+3. Audit-ready — the script is the record; interactive sessions are not
+4. CI-compatible — the same pattern works from GitHub Actions without changes
+Interactive sessions are fine for debugging but should never be the primary
+method for provisioning or configuration.
+
+---
+
+**Q: Should the runbook be committed to the repo?**
+A: No. It is a personal operational and decision log. Added to `.gitignore`:
+`docs/runbook.md`
+It stays local only and is updated frequently throughout the build.
