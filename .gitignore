@@ -56,3 +56,6 @@ kubeconfig
 
 # Docker
 *.tar
+
+# Personal — never commit
+docs/runbook.md
