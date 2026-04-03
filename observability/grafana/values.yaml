@@ -1,3 +1,2 @@
-# Grafana Helm values
-# Stub — will be populated in Sprint 5
-# Chart: grafana/grafana v8.5.2
+# Standalone Grafana chart is not deployed — Grafana ships with kube-prometheus-stack.
+# Dashboard JSON: observability/grafana/dashboards/sample-app.json (synced via ConfigMap + sidecar).

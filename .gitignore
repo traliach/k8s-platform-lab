@@ -59,3 +59,18 @@ kubeconfig
 
 # Personal — never commit
 docs/runbook.md
+*claude.md
+*.cursorrules
+*.cursorrules.md
+*.cursorrules.txt
+*.cursorrules.yml
+*.cursorrules.yaml
+*.cursorrules.json
+*.cursorrules.jsonc
+*.cursorrules.json5
+*.cursorrules.jsonld
+*.cursorrules.jsonld
+
+.claude_project_b.md
+CLAUDE_project_b.md
+.docs

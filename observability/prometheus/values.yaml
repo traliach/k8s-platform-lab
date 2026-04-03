@@ -1,3 +1,53 @@
-# kube-prometheus-stack Helm values
-# Stub — will be populated in Sprint 5
-# Chart: prometheus-community/kube-prometheus-stack v65.1.1
+# kube-prometheus-stack overrides (chart v65.x)
+# Grafana is bundled here — do not deploy a separate Grafana release into monitoring.
+
+defaultRules:
+  create: true
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    scrapeInterval: 30s
+    # Discover ServiceMonitors cluster-wide (sample-app, etc.)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 200m
+        memory: 768Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+
+grafana:
+  adminUser: admin
+  # Change after install — also override via Argo CD / Sealed Secrets in real clusters.
+  adminPassword: changeme-grafana-lab-2026
+  persistence:
+    enabled: false
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true

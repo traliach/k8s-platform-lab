@@ -1,0 +1,91 @@
+name: Lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform fmt + validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: "1.9.0"
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
+
+  helm-prometheus:
+    name: Helm (kube-prometheus-stack)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: azure/setup-helm@v4.2.0
+        with:
+          version: v3.16.3
+      - run: |
+          set -euo pipefail
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update prometheus-community
+          helm pull prometheus-community/kube-prometheus-stack --version 65.1.1 --untar
+          helm lint kube-prometheus-stack -f observability/prometheus/values.yaml
+          helm template kps kube-prometheus-stack \
+            --version 65.1.1 \
+            -f observability/prometheus/values.yaml \
+            >/tmp/kps.yaml
+          test -s /tmp/kps.yaml
+
+  kustomize-dashboards:
+    name: Kustomize (Grafana dashboards)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: azure/setup-kubectl@v4.0.0
+        with:
+          version: v1.31.2
+      - run: kubectl kustomize observability/grafana/dashboards | head -c 5000 | grep -q sample-app
+
+  kubernetes-manifests:
+    name: kubectl dry-run (client)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: azure/setup-kubectl@v4.0.0
+        with:
+          version: v1.31.2
+      - name: Core + GitOps manifests
+        run: |
+          set -euo pipefail
+          kubectl apply --dry-run=client -f cluster/namespaces.yaml
+          for f in apps/sample-app/k8s/deployment.yaml apps/sample-app/k8s/service.yaml \
+                   apps/sample-app/k8s/ingress.yaml apps/sample-app/k8s/hpa.yaml \
+                   apps/sample-app/k8s/serviceaccount.yaml; do
+            kubectl apply --dry-run=client -f "$f"
+          done
+          kubectl apply --dry-run=client -f gitops/argocd/app-of-apps.yaml
+          for f in gitops/argocd/apps/*.yaml; do
+            kubectl apply --dry-run=client -f "$f"
+          done
+      - name: ServiceMonitor (Prometheus Operator CRD)
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/w" -w /w ghcr.io/yannh/kubeconform:v0.6.7 \
+            -kubernetes-version 1.31.0 \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            apps/sample-app/k8s/servicemonitor.yaml
+
+  docker-sample-app:
+    name: Docker build (sample app)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - run: docker build -t sample-app:ci ./apps/sample-app
