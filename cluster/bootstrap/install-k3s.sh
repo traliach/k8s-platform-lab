@@ -33,7 +33,6 @@ info "Installing k3s ${K3S_VERSION}..."
 
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="${K3S_VERSION}" sh -s - \
   --write-kubeconfig-mode 644 \
-  --disable servicelb \
   --node-name k8s-platform-lab-node
 
 # ─── Wait for node to be ready ─────────────────────────────────────────────────
