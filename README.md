@@ -24,7 +24,6 @@ A fully self-hosted Kubernetes platform built to demonstrate real platform engin
 
 ## Architecture
 
-<!-- docs/architecture.png will be added in Sprint 7 -->
 ```
 GitHub repo (main)
       │  push
@@ -35,9 +34,9 @@ GitHub repo (main)
       │
       ▼
    ArgoCD (App-of-Apps)
-      ├── sample-app   → apps/sample-app/k8s/
-      ├── prometheus   → observability/prometheus/values.yaml
-      └── grafana      → observability/grafana/dashboards/
+      ├── sample-app         → apps/sample-app/k8s/
+      ├── prometheus         → kube-prometheus-stack + observability/prometheus/values.yaml
+      └── grafana-dashboards → observability/grafana/dashboards/ (Kustomize → Grafana sidecar)
       │
       ▼
   k3s cluster (AWS EC2 t3.medium, us-east-1)
@@ -45,6 +44,10 @@ GitHub repo (main)
       ├── namespace: monitoring   → Prometheus + Grafana
       └── namespace: argocd       → ArgoCD
 ```
+
+Full architecture with component rationale: [`docs/architecture.md`](./docs/architecture.md)
+
+Key technical decisions and trade-offs: [`docs/decisions.md`](./docs/decisions.md)
 
 ---
 
@@ -65,7 +68,7 @@ GitHub repo (main)
 
 ## Quick start
 
-> Full step-by-step guide: [`docs/setup.md`](./docs/setup.md)
+> Full build narrative and decisions: [`docs/runbook.md`](./docs/runbook.md)
 
 ```bash
 # 1. Clone
@@ -76,19 +79,20 @@ cd k8s-platform-lab
 bash scripts/setup-prerequisites.sh
 
 # 3. Provision the VM
-cd infra
-terraform init
-terraform plan
-terraform apply
+cd infra && terraform init && terraform apply
 
-# 4. Bootstrap the cluster (SSH into the VM)
-ssh -i ~/.ssh/k8s-platform-lab-key ec2-user@<public-ip>
-bash /tmp/install-k3s.sh
-bash /tmp/install-argocd.sh
+# 4. Bootstrap the cluster via EC2 Instance Connect (AWS console → Connect)
+#    In the browser shell on the VM:
+sudo dnf install -y git
+export PATH="/usr/local/bin:$PATH"
+git clone https://github.com/traliach/k8s-platform-lab.git
+cd k8s-platform-lab
+bash cluster/bootstrap/install-k3s.sh
+bash cluster/bootstrap/install-argocd.sh
 
 # 5. Apply namespaces and bootstrap ArgoCD app-of-apps
 kubectl apply -f cluster/namespaces.yaml
-argocd app create -f gitops/argocd/app-of-apps.yaml
+kubectl apply -f gitops/argocd/app-of-apps.yaml
 ```
 
 ---
@@ -108,22 +112,23 @@ k8s-platform-lab/
 │   │   └── install-argocd.sh # ArgoCD install + initial config
 │   └── namespaces.yaml       # argocd, monitoring, sample-app
 ├── apps/
-│   └── sample-app/           # Node.js + Express (/, /health, /metrics)
-│       ├── src/index.js
+│   └── sample-app/           # Node.js + Express (/, /health, /metrics) + Vite frontend
+│       ├── server/index.js
+│       ├── client/src/GrowStrongMealPlan.jsx
 │       ├── Dockerfile
-│       └── k8s/              # Deployment, Service, Ingress, HPA
+│       └── k8s/              # Deployment, Service, Ingress, HPA, ServiceMonitor
 ├── gitops/
 │   └── argocd/
 │       ├── app-of-apps.yaml  # root ArgoCD Application
 │       └── apps/             # sample-app, prometheus, grafana manifests
 ├── observability/
 │   ├── prometheus/values.yaml
-│   └── grafana/dashboards/sample-app.json
+│   └── grafana/dashboards/   # Kustomize ConfigMap + sample-app.json dashboard
 ├── scripts/
 │   └── setup-prerequisites.sh
 ├── docs/
-│   ├── architecture.png
-│   └── setup.md
+│   ├── architecture.md       # System diagram, components, design rationale
+│   └── decisions.md          # Architecture Decision Records (ADR-001 – ADR-006)
 └── PROJECT_PLAN.md
 ```
 

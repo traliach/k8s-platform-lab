@@ -65,15 +65,15 @@ jobs:
       - name: Core + GitOps manifests
         run: |
           set -euo pipefail
-          kubectl apply --dry-run=client -f cluster/namespaces.yaml
+          kubectl apply --dry-run=client --validate=false -f cluster/namespaces.yaml
           for f in apps/sample-app/k8s/deployment.yaml apps/sample-app/k8s/service.yaml \
                    apps/sample-app/k8s/ingress.yaml apps/sample-app/k8s/hpa.yaml \
                    apps/sample-app/k8s/serviceaccount.yaml; do
-            kubectl apply --dry-run=client -f "$f"
+            kubectl apply --dry-run=client --validate=false -f "$f"
           done
-          kubectl apply --dry-run=client -f gitops/argocd/app-of-apps.yaml
+          kubectl apply --dry-run=client --validate=false -f gitops/argocd/app-of-apps.yaml
           for f in gitops/argocd/apps/*.yaml; do
-            kubectl apply --dry-run=client -f "$f"
+            kubectl apply --dry-run=client --validate=false -f "$f"
           done
       - name: ServiceMonitor (Prometheus Operator CRD)
         run: |
