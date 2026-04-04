@@ -55,33 +55,29 @@ jobs:
       - run: kubectl kustomize observability/grafana/dashboards | head -c 5000 | grep -q sample-app
 
   kubernetes-manifests:
-    name: kubectl dry-run (client)
+    name: kubeconform (manifest validation)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: azure/setup-kubectl@v4.0.0
-        with:
-          version: v1.31.2
-      - name: Core + GitOps manifests
-        run: |
-          set -euo pipefail
-          kubectl apply --dry-run=client --validate=false -f cluster/namespaces.yaml
-          for f in apps/sample-app/k8s/deployment.yaml apps/sample-app/k8s/service.yaml \
-                   apps/sample-app/k8s/ingress.yaml apps/sample-app/k8s/hpa.yaml \
-                   apps/sample-app/k8s/serviceaccount.yaml; do
-            kubectl apply --dry-run=client --validate=false -f "$f"
-          done
-          kubectl apply --dry-run=client --validate=false -f gitops/argocd/app-of-apps.yaml
-          for f in gitops/argocd/apps/*.yaml; do
-            kubectl apply --dry-run=client --validate=false -f "$f"
-          done
-      - name: ServiceMonitor (Prometheus Operator CRD)
+      - name: Validate all manifests
         run: |
           docker run --rm -v "${{ github.workspace }}:/w" -w /w ghcr.io/yannh/kubeconform:v0.6.7 \
             -kubernetes-version 1.31.0 \
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-            apps/sample-app/k8s/servicemonitor.yaml
+            -ignore-missing-schemas \
+            -summary \
+            cluster/namespaces.yaml \
+            apps/sample-app/k8s/deployment.yaml \
+            apps/sample-app/k8s/service.yaml \
+            apps/sample-app/k8s/ingress.yaml \
+            apps/sample-app/k8s/hpa.yaml \
+            apps/sample-app/k8s/serviceaccount.yaml \
+            apps/sample-app/k8s/servicemonitor.yaml \
+            gitops/argocd/app-of-apps.yaml \
+            gitops/argocd/apps/sample-app.yaml \
+            gitops/argocd/apps/prometheus.yaml \
+            gitops/argocd/apps/grafana-dashboards.yaml
 
   docker-sample-app:
     name: Docker build (sample app)
