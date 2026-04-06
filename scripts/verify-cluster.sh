@@ -138,15 +138,16 @@ else
   fail "GET /health did not return expected body (got: ${HEALTH_BODY:-no response})"
 fi
 
-# Warm up all replicas so every pod has at least one observed request
-# (prom-client only emits labelled counters after first .inc())
-for i in $(seq 1 6); do curl -sf --connect-timeout 3 http://localhost/health >/dev/null 2>&1 || true; done
-
-METRICS_BODY=$(curl -sf --connect-timeout 5 http://localhost/metrics 2>/dev/null || echo "")
-if echo "${METRICS_BODY}" | grep -q "http_requests_total"; then
-  ok "GET /metrics → http_requests_total present"
+SA_POD=$(kubectl get pod -n sample-app -l app=sample-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+if [ -n "${SA_POD}" ]; then
+  METRICS_BODY=$(kubectl exec -n sample-app "${SA_POD}" -- wget -qO- http://localhost:3000/metrics 2>/dev/null || echo "")
+  if echo "${METRICS_BODY}" | grep -q "http_requests_total"; then
+    ok "GET /metrics → http_requests_total present"
+  else
+    fail "GET /metrics missing http_requests_total"
+  fi
 else
-  fail "GET /metrics missing http_requests_total"
+  fail "GET /metrics — no sample-app pod found"
 fi
 
 # Check for orphaned standalone Grafana (should have been deleted)
