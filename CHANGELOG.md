@@ -7,17 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v1.0.0] — 2026-04-04
+## [v1.0.0] — 2026-04-06
 
 ### Added
 - `docs/architecture.md` — full system diagram, component rationale, request/metrics/GitOps data flows, infrastructure sizing, security posture
+- `docs/architecture.png` — rendered PNG architecture diagram (source: `docs/architecture.mmd`)
 - `docs/decisions.md` — six Architecture Decision Records (ADR-001 through ADR-006) covering k3s, ArgoCD app-of-apps, kube-prometheus-stack, dashboard delivery, ServiceMonitor, and multi-stage Docker build
-- `scripts/verify-cluster.sh` — end-to-end health check script: node, ServiceLB, Traefik, namespaces, ArgoCD apps, sample app endpoints, Prometheus targets, Grafana dashboard ConfigMap
+- `scripts/verify-cluster.sh` — end-to-end health check script: 21 checks covering node, ServiceLB, Traefik, namespaces, ArgoCD apps, sample app endpoints, Prometheus targets, Grafana dashboard ConfigMap, and prom-client metrics registration
 
 ### Fixed
-- `lint.yml` kubectl dry-run job: added `--validate=false` to prevent OpenAPI schema download failure in CI (no cluster available in GitHub Actions)
+- `lint.yml` manifest validation: replaced `kubectl apply --dry-run=client` (requires live cluster for resource discovery) with `kubeconform` schema-based validation — no cluster needed in CI
+- `release.yml` workflow: moved Docker credential check out of step `if` conditions (secrets context not available there) into a dedicated `docker_check` step writing to `GITHUB_OUTPUT`; Docker build+push now runs correctly when `DOCKER_USERNAME`/`DOCKER_PASSWORD` secrets are set
 - ServiceLB disabled on running cluster: `--disable servicelb` removed from k3s systemd service; Traefik LoadBalancer now has external IP and port 80 is accessible
 - Orphaned standalone Grafana deployment and service deleted from `monitoring` namespace (left behind when ArgoCD application was removed without a resources finalizer)
+- `scripts/verify-cluster.sh` metrics probe: replaced BusyBox `wget` (unreliable in minimal Alpine containers) with `node -e` HTTP client — guaranteed available in `node:20-alpine` image; probes `127.0.0.1` directly to avoid IPv6 ambiguity
 
 ## [v0.1.1] — 2026-04-02
 

@@ -29,7 +29,7 @@ GitHub repo (main)
       │  push
       ▼
  GitHub Actions
-  ├── lint.yml     → helm lint, kubectl dry-run, terraform validate
+  ├── lint.yml     → helm lint, kubeconform, terraform validate
   └── release.yml  → git tag, docker build+push, GitHub release
       │
       ▼
@@ -70,8 +70,6 @@ Key technical decisions and trade-offs: [`docs/decisions.md`](./docs/decisions.m
 
 ## Quick start
 
-> Full build narrative and decisions: [`docs/runbook.md`](./docs/runbook.md)
-
 ```bash
 # 1. Clone
 git clone https://github.com/traliach/k8s-platform-lab.git
@@ -105,7 +103,7 @@ kubectl apply -f gitops/argocd/app-of-apps.yaml
 k8s-platform-lab/
 ├── .github/
 │   └── workflows/
-│       ├── lint.yml          # helm lint + kubectl dry-run + terraform validate
+│       ├── lint.yml          # helm lint + kubeconform + terraform validate
 │       └── release.yml       # git tag + Docker image push + GitHub release
 ├── infra/                    # Terraform — AWS EC2, VPC, security group, key pair
 ├── cluster/
@@ -127,11 +125,14 @@ k8s-platform-lab/
 │   ├── prometheus/values.yaml
 │   └── grafana/dashboards/   # Kustomize ConfigMap + sample-app.json dashboard
 ├── scripts/
-│   └── setup-prerequisites.sh
-├── docs/
-│   ├── architecture.md       # System diagram, components, design rationale
-│   └── decisions.md          # Architecture Decision Records (ADR-001 – ADR-006)
-└── PROJECT_PLAN.md
+│   ├── setup-prerequisites.sh    # SSH key generation, GitHub secrets
+│   ├── verify-cluster.sh         # End-to-end platform health check (21 checks)
+│   ├── diagnose-argocd-nodeport.sh
+│   └── ec2-clone-repo-apply-namespaces.sh
+└── docs/
+    ├── architecture.md           # System diagram, components, design rationale
+    ├── architecture.png          # PNG diagram (rendered from architecture.mmd)
+    └── decisions.md              # Architecture Decision Records (ADR-001 – ADR-006)
 ```
 
 ---
