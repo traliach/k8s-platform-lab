@@ -45,6 +45,8 @@ GitHub repo (main)
       └── namespace: argocd       → ArgoCD
 ```
 
+![Architecture](./docs/architecture.png)
+
 Full architecture with component rationale: [`docs/architecture.md`](./docs/architecture.md)
 
 Key technical decisions and trade-offs: [`docs/decisions.md`](./docs/decisions.md)

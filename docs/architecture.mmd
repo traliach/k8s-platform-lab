@@ -1,0 +1,57 @@
+graph TB
+    subgraph DEV["Developer Laptop"]
+        GIT["git push"]
+    end
+
+    subgraph GHA["GitHub Actions"]
+        LINT["lint.yml\nHelm · kubeconform · Terraform · Docker build"]
+        RELEASE["release.yml\ngit tag · Docker push · GitHub Release"]
+    end
+
+    subgraph AWS["AWS EC2  t3.medium  us-east-1"]
+        subgraph K3S["k3s v1.31 — single-node Kubernetes"]
+            subgraph ARGOCD_NS["namespace: argocd"]
+                ARGO["ArgoCD v2.13\nApp-of-Apps"]
+            end
+
+            subgraph SAMPLE_NS["namespace: sample-app"]
+                DEP["Deployment\n2 replicas · HPA"]
+                SVC["Service · Ingress"]
+                SM["ServiceMonitor"]
+            end
+
+            subgraph MON_NS["namespace: monitoring"]
+                PROM["Prometheus\nscrapes /metrics every 30s"]
+                GRAF["Grafana\ndashboard sidecar"]
+                AM["Alertmanager"]
+            end
+
+            subgraph KUBE_SYS["kube-system"]
+                TRAEFIK["Traefik\nIngress Controller :80/:443"]
+                SVCLB["ServiceLB\nbinds host ports"]
+            end
+        end
+    end
+
+    GIT -->|push| GHA
+    LINT -->|on PR| GHA
+    RELEASE -->|on merge to main| GHA
+    GHA -->|ArgoCD polls every 3 min| ARGO
+    ARGO -->|syncs| SAMPLE_NS
+    ARGO -->|syncs| MON_NS
+    TRAEFIK --> DEP
+    SVCLB --> TRAEFIK
+    SM --> PROM
+    PROM --> GRAF
+    DEP --> SM
+
+    BROWSER["Browser :80"] --> SVCLB
+
+    style DEV fill:#1e3a5f,color:#fff
+    style GHA fill:#2d4a2d,color:#fff
+    style AWS fill:#4a2d1e,color:#fff
+    style K3S fill:#2d2d4a,color:#fff
+    style ARGOCD_NS fill:#3a1e4a,color:#fff
+    style SAMPLE_NS fill:#1e4a3a,color:#fff
+    style MON_NS fill:#4a3a1e,color:#fff
+    style KUBE_SYS fill:#1e2d4a,color:#fff
