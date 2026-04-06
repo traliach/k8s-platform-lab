@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: azure/setup-kubectl@v4.0.0
+      - uses: azure/setup-kubectl@v5.0.0
         with:
           version: v1.31.2
       - run: kubectl kustomize observability/grafana/dashboards | head -c 5000 | grep -q sample-app
