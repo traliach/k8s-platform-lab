@@ -140,11 +140,14 @@ fi
 
 SA_POD=$(kubectl get pod -n sample-app -l app=sample-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
 if [ -n "${SA_POD}" ]; then
+  # Prime one real request so the middleware records a sample before checking
+  kubectl exec -n sample-app "${SA_POD}" -- wget -qO- http://localhost:3000/health >/dev/null 2>&1 || true
+
   METRICS_BODY=$(kubectl exec -n sample-app "${SA_POD}" -- wget -qO- http://localhost:3000/metrics 2>/dev/null || echo "")
-  if echo "${METRICS_BODY}" | grep -q "# HELP http_requests_total"; then
+  if echo "${METRICS_BODY}" | grep '^http_requests_total{' | grep -q 'route="/health"'; then
     ok "GET /metrics → http_requests_total present"
   else
-    fail "GET /metrics missing http_requests_total"
+    fail "GET /metrics missing http_requests_total after synthetic /health hit"
   fi
 else
   fail "GET /metrics — no sample-app pod found"
