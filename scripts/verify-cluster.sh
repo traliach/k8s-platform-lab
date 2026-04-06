@@ -140,11 +140,17 @@ fi
 
 SA_POD=$(kubectl get pod -n sample-app -l app=sample-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
 if [ -n "${SA_POD}" ]; then
-  METRICS_BODY=$(kubectl exec -n sample-app "${SA_POD}" -- wget -qO- http://localhost:3000/metrics 2>/dev/null || echo "")
-  if echo "${METRICS_BODY}" | grep -q '^http_requests_total{'; then
-    ok "GET /metrics → http_requests_total present"
+  if ! METRICS_BODY=$(kubectl exec -n sample-app "${SA_POD}" -- \
+      node -e "require('node:http').get('http://127.0.0.1:3000/metrics', r => {
+        let b=''; r.setEncoding('utf8');
+        r.on('data', c => b += c);
+        r.on('end', () => process.stdout.write(b));
+      }).on('error', e => { console.error(e.message); process.exit(1); })"); then
+    fail "GET /metrics probe failed inside pod"
+  elif echo "${METRICS_BODY}" | grep -q '# HELP http_requests_total'; then
+    ok "GET /metrics → http_requests_total registered"
   else
-    fail "GET /metrics missing http_requests_total"
+    fail "GET /metrics returned body but http_requests_total not registered"
   fi
 else
   fail "GET /metrics — no sample-app pod found"
