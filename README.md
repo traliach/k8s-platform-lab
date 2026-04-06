@@ -137,6 +137,22 @@ k8s-platform-lab/
 
 ---
 
+## Screenshots
+
+**ArgoCD — all 4 apps Synced + Healthy**
+![ArgoCD apps overview](./docs/screenshots/argocd-apps-overview.png)
+
+**Grafana — Sample app live metrics**
+![Grafana dashboard](./docs/screenshots/grafana-dashboard.png)
+
+**Prometheus — all targets up including sample-app (2/2)**
+![Prometheus targets](./docs/screenshots/prometheus-targets.png)
+
+**verify-cluster.sh — 21/21 checks passing**
+![Verify cluster](./docs/screenshots/verify-cluster-21-21.png)
+
+---
+
 ## Deployment
 
 All deployments go through ArgoCD — never `kubectl apply` directly.
