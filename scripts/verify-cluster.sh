@@ -138,6 +138,10 @@ else
   fail "GET /health did not return expected body (got: ${HEALTH_BODY:-no response})"
 fi
 
+# Warm up all replicas so every pod has at least one observed request
+# (prom-client only emits labelled counters after first .inc())
+for i in $(seq 1 6); do curl -sf --connect-timeout 3 http://localhost/health >/dev/null 2>&1 || true; done
+
 METRICS_BODY=$(curl -sf --connect-timeout 5 http://localhost/metrics 2>/dev/null || echo "")
 if echo "${METRICS_BODY}" | grep -q "http_requests_total"; then
   ok "GET /metrics → http_requests_total present"
