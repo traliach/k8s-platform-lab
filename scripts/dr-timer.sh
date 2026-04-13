@@ -63,13 +63,17 @@ if [[ -z "${AWS_PROFILE:-}" ]]; then
   echo -e "${YELLOW}[WARN]${NC}  AWS_PROFILE is not set. Run: export AWS_PROFILE=terraform-deployer"
 fi
 
+if [[ -z "${TF_VAR_public_key:-}" ]]; then
+  echo -e "${YELLOW}[WARN]${NC}  TF_VAR_public_key is not set. Run: export TF_VAR_public_key=\"\$(cat ~/.ssh/k8s-platform-lab-key.pub)\""
+fi
+
 # ─── Step 1: Terraform apply ───────────────────────────────────────────────────
 header "Step 1 — Reprovision VM (terraform apply)"
 step_start "Step 1: Terraform apply"
 
 cd infra
 terraform init -upgrade -reconfigure
-terraform plan -var-file=terraform.tfvars -out=tfplan
+terraform plan -out=tfplan
 terraform apply tfplan
 
 PUBLIC_IP=$(terraform output -raw public_ip)

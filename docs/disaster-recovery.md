@@ -24,10 +24,13 @@ Target: under 30 minutes from scratch.
 ### Step 1 — Reprovision the VM (~5 min)
 
 ```bash
+export AWS_PROFILE=terraform-deployer
+export TF_VAR_public_key="$(cat ~/.ssh/k8s-platform-lab-key.pub)"
+
 cd infra
 terraform init
-terraform plan -var-file=terraform.tfvars   # confirm resources look correct
-terraform apply -var-file=terraform.tfvars
+terraform plan    # confirm resources look correct
+terraform apply
 ```
 
 Note the new public IP from the output:
