@@ -83,17 +83,23 @@ Pull the kubeconfig from the new instance and apply the root ArgoCD Application:
 
 ```bash
 # Get kubeconfig from the new node
+mkdir -p ~/.kube
 scp -i ~/.ssh/k8s-platform-lab-key \
   ec2-user@${PUBLIC_IP}:~/.kube/config \
   ~/.kube/k8s-platform-lab-config
 
+# Replace internal address with public IP
+sed -i "s|127.0.0.1|${PUBLIC_IP}|g" ~/.kube/k8s-platform-lab-config
 export KUBECONFIG=~/.kube/k8s-platform-lab-config
 
 # Verify connection
 kubectl get nodes
 
+# Namespaces must exist before ArgoCD syncs (apps use CreateNamespace=false)
+kubectl apply -f cluster/namespaces.yaml
+
 # Apply the App of Apps — ArgoCD will sync everything from Git automatically
-kubectl apply -f ../gitops/argocd/app-of-apps.yaml
+kubectl apply -f gitops/argocd/app-of-apps.yaml
 ```
 
 ArgoCD will now sync all apps from the `main` branch:
