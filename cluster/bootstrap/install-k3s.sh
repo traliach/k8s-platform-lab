@@ -31,9 +31,14 @@ fi
 # ─── Install k3s ───────────────────────────────────────────────────────────────
 info "Installing k3s ${K3S_VERSION}..."
 
+# Fetch public IP from EC2 metadata so the TLS cert includes it (required for remote kubectl)
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+info "Public IP for TLS SAN: ${PUBLIC_IP}"
+
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="${K3S_VERSION}" sh -s - \
   --write-kubeconfig-mode 644 \
-  --node-name k8s-platform-lab-node
+  --node-name k8s-platform-lab-node \
+  --tls-san "${PUBLIC_IP}"
 
 # ─── Wait for node to be ready ─────────────────────────────────────────────────
 info "Waiting for node to become Ready..."

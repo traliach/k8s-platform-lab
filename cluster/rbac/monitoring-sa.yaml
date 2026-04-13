@@ -1,0 +1,23 @@
+# RBAC — monitoring namespace
+#
+# ServiceAccounts: managed entirely by kube-prometheus-stack Helm chart
+#   Managed by: ArgoCD → gitops/argocd/apps/prometheus.yaml (Helm)
+#
+# Accounts created by the Helm chart:
+#   prometheus-grafana                      — Grafana UI
+#   prometheus-kube-prometheus-operator     — manages Prometheus + Alertmanager CRDs
+#   prometheus-kube-prometheus-prometheus   — Prometheus scraper
+#   prometheus-kube-prometheus-alertmanager — Alertmanager
+#   prometheus-kube-prometheus-admission    — webhook admission controller
+#   prometheus-kube-state-metrics           — cluster state metrics
+#   prometheus-prometheus-node-exporter     — node-level metrics
+#
+# Access model:
+#   - prometheus-kube-prometheus-operator has ClusterRole to manage CRDs
+#   - prometheus-kube-prometheus-prometheus has ClusterRole to scrape all namespaces
+#   - All other SAs are namespace-scoped with least privilege
+#   - Do not modify these manually — Helm manages their lifecycle
+#
+# To inspect on the cluster:
+#   kubectl get serviceaccounts -n monitoring
+#   kubectl get clusterrolebindings | grep prometheus

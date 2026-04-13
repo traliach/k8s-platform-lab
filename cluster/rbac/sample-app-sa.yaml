@@ -1,0 +1,25 @@
+# RBAC — sample-app namespace
+#
+# ServiceAccount: sample-app
+#   Managed by: ArgoCD → apps/sample-app/k8s/serviceaccount.yaml
+#   Namespace:  sample-app
+#
+# Access model:
+#   - No Kubernetes API access required (stateless HTTP app)
+#   - No Role or RoleBinding needed
+#   - Pod identity only — used to distinguish workload in audit logs
+#   - automountServiceAccountToken defaults to false in k3s for new SAs
+#
+# To inspect on the cluster:
+#   kubectl get serviceaccount sample-app -n sample-app
+#   kubectl describe serviceaccount sample-app -n sample-app
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sample-app
+  namespace: sample-app
+  labels:
+    app: sample-app
+    managed-by: argocd
+automountServiceAccountToken: false
