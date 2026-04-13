@@ -22,6 +22,7 @@ coverage/
 *.tfvars
 !*.tfvars.example
 *.tfplan
+tfplan
 # Note: .terraform.lock.hcl is intentionally committed for reproducible provider versions
 
 # OS
