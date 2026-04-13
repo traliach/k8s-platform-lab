@@ -162,7 +162,7 @@ All application configuration and Kubernetes manifests are fully recovered from 
 
 | Date | Performed by | Time to recover | Notes |
 |------|-------------|-----------------|-------|
-| TBD  | Achille Traore | TBD | First DR test — run `bash scripts/dr-timer.sh` and paste output here |
+| 2026-04-13 | Achille Traore | ~30 min | Full cluster loss → rebuild. Manual steps required: TLS SAN fix, namespace apply. Both now automated in scripts. 21/21 checks passing. |
 
 > **Instructions:** Run `bash scripts/dr-timer.sh` from the repo root. It times each step
 > automatically and prints the exact table row to paste here when done.

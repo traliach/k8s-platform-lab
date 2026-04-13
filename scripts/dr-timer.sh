@@ -127,6 +127,9 @@ scp -i ~/.ssh/k8s-platform-lab-key -o StrictHostKeyChecking=no \
 sed -i "s|127.0.0.1|${PUBLIC_IP}|g" ~/.kube/k8s-platform-lab-config
 export KUBECONFIG=~/.kube/k8s-platform-lab-config
 
+# Namespaces must exist before ArgoCD syncs apps into them (CreateNamespace=false)
+kubectl apply -f cluster/namespaces.yaml
+
 kubectl apply -f gitops/argocd/app-of-apps.yaml
 
 info "Waiting for ArgoCD apps to sync (up to 5 min)..."
