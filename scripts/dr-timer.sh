@@ -117,6 +117,8 @@ step_end "Step 3: ArgoCD install"
 header "Step 4 — Apply App of Apps"
 step_start "Step 4: App of Apps"
 
+mkdir -p ~/.kube
+
 scp -i ~/.ssh/k8s-platform-lab-key -o StrictHostKeyChecking=no \
   ec2-user@"${PUBLIC_IP}":~/.kube/config \
   ~/.kube/k8s-platform-lab-config
