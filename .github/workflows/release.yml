@@ -77,7 +77,7 @@ jobs:
 
       - name: GitHub Release
         if: steps.tag_check.outputs.exists == 'false'
-        uses: softprops/action-gh-release@v2.2.1
+        uses: softprops/action-gh-release@v2.6.1
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: ${{ steps.meta.outputs.tag }}
